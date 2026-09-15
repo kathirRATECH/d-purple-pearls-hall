@@ -7,7 +7,7 @@ async function loadAccount(req, res, next) {
     const queries = {
       student: ['SELECT id, full_name AS "fullName", email, admission_number AS "admissionNumber", class_name AS "className" FROM students WHERE id = $1', 'student'],
       teacher: ['SELECT id, full_name AS "fullName", email, class_name AS "className" FROM teachers WHERE id = $1', 'teacher'],
-      owner: ['SELECT id, username FROM owner WHERE id = 1', 'owner']
+      owner: ['SELECT id, username FROM owner WHERE id = $1', 'owner']
     };
     const query = queries[req.session.accountType];
     const result = query ? await db.query(query[0], [req.session.accountId]) : { rows: [] };
