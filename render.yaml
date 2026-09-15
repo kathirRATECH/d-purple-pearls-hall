@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: d-purple-pearls-hall
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_FILE
+        value: /var/data/school.sqlite
+      - key: SESSION_SECRET
+        generateValue: true
+    disk:
+      name: school-data
+      mountPath: /var/data
+      sizeGB: 1
