@@ -6,11 +6,10 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { initializeDatabase, ownerExists } = require('./db');
 const { loadAccount } = require('./middleware/auth');
+const asyncHandler = require('./middleware/async');
 const studentRoutes = require('./routes/student');
 const teacherRoutes = require('./routes/teacher');
 const ownerRoutes = require('./routes/owner');
-
-initializeDatabase();
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -36,7 +35,7 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 8
   }
 }));
-app.use(loadAccount);
+app.use(asyncHandler(loadAccount));
 app.use('/student/login', rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false }));
 app.use('/teacher/login', rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false }));
 app.use('/owner/login', rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false }));
@@ -47,10 +46,10 @@ app.use('/', teacherRoutes);
 app.use('/', ownerRoutes);
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
-app.get('/', (req, res) => {
+app.get('/', asyncHandler(async (req, res) => {
   if (req.account) return res.redirect(`/${req.account.type}/dashboard`);
-  res.render('home', { title: 'School Portal', ownerReady: ownerExists() });
-});
+  res.render('home', { title: 'School Portal', ownerReady: await ownerExists() });
+}));
 
 app.use((req, res) => res.status(404).render('error', { title: 'Page not found', message: 'We could not find that page.' }));
 app.use((err, req, res, next) => {
@@ -58,4 +57,9 @@ app.use((err, req, res, next) => {
   res.status(500).render('error', { title: 'Something went wrong', message: 'An unexpected error occurred. Please try again.' });
 });
 
-app.listen(port, host, () => console.log(`School portal listening on ${host}:${port}`));
+initializeDatabase()
+  .then(() => app.listen(port, host, () => console.log(`School portal listening on ${host}:${port}`)))
+  .catch((error) => {
+    console.error('Database initialization failed:', error);
+    process.exitCode = 1;
+  });
