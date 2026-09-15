@@ -14,7 +14,7 @@ router.post('/owner/setup', asyncHandler(async (req, res) => {
   if (password.length < 8 || password.length > 128) return res.status(400).render('owner-setup', { title: 'Owner setup', error: 'Password must be 8–128 characters.', values });
   try { await db.query('INSERT INTO owner (id, username, password_hash) VALUES (1, $1, $2)', [values.username, bcrypt.hashSync(password, 12)]); res.redirect('/owner/login?setup=1'); }
   catch (error) {
-    console.error('Owner setup failed:', { code: error.code, constraint: error.constraint, detail: error.detail });
+    console.error('Owner setup failed:', { message: error.message, code: error.code, constraint: error.constraint, detail: error.detail, stack: error.stack });
     res.status(400).render('owner-setup', { title: 'Owner setup', error: 'Owner setup could not be completed. Please try again.', values });
   }
 }));
