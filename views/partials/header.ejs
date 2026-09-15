@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · D Purple Pearls Hall</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/"><img src="/school-logo.jpg" alt="D Purple Pearls Hall logo"><span>D Purple Pearls Hall</span></a>
+    <% if (account) { %>
+      <nav>
+        <a href="/<%= account.type %>/dashboard">Dashboard</a>
+        <form method="post" action="/<%= account.type %>/logout" class="inline"><button class="link-button" type="submit">Log out</button></form>
+      </nav>
+    <% } %>
+  </header>
+  <main class="container">
