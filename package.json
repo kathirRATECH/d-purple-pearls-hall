@@ -9,7 +9,7 @@
     "seed": "node seed.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": "22.x"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,4 +20,4 @@
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1"
   }
-}
+}  
