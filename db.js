@@ -1,89 +1,81 @@
-const fs = require('fs');
-const path = require('path');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 
-const filename = process.env.DB_FILE || './data/school.sqlite';
-const dbPath = path.isAbsolute(filename) ? filename : path.join(process.cwd(), filename);
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is required.');
+}
 
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
+});
 
-function initializeDatabase() {
-  db.exec(`
+const db = {
+  query(text, values) {
+    return pool.query(text, values);
+  }
+};
+
+async function initializeDatabase() {
+  await db.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY,
-      applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-  `);
-
-  // Upgrade installations created by the original unified-users prototype.
-  // Those tables cannot represent the explicit account model, so they are
-  // retired before creating the replacement schema.
-  const hasStudents = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'students'").get();
-  const hasLegacyUsers = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'users'").get();
-  if (!hasStudents && hasLegacyUsers) {
-    const oldScores = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'scores'").get();
-    if (oldScores) db.exec('DROP TABLE scores');
-    db.exec('DROP TABLE users');
-  }
-
-  db.exec(`
     CREATE TABLE IF NOT EXISTS students (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
       full_name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-      admission_number TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      email TEXT NOT NULL UNIQUE,
+      admission_number TEXT NOT NULL UNIQUE,
       class_name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS teachers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
       full_name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      email TEXT NOT NULL UNIQUE,
       class_name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS owner (
       id INTEGER PRIMARY KEY CHECK (id = 1),
-      username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      username TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS scores (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
       student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-      subject TEXT NOT NULL COLLATE NOCASE,
-      score REAL NOT NULL CHECK (score >= 0 AND score <= 100),
+      subject TEXT NOT NULL,
+      score NUMERIC NOT NULL CHECK (score >= 0 AND score <= 100),
       recorded_by INTEGER NOT NULL REFERENCES teachers(id) ON DELETE RESTRICT,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(student_id, subject)
     );
     CREATE TABLE IF NOT EXISTS subjects (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE COLLATE NOCASE
+      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE
     );
     CREATE INDEX IF NOT EXISTS idx_students_class ON students(class_name);
     CREATE INDEX IF NOT EXISTS idx_teachers_class ON teachers(class_name);
     CREATE INDEX IF NOT EXISTS idx_scores_student ON scores(student_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_students_admission_ci ON students (LOWER(admission_number));
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_teachers_email_ci ON teachers (LOWER(email));
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_owner_username_ci ON owner (LOWER(username));
   `);
-
-  if (!db.prepare('SELECT 1 FROM schema_migrations WHERE version = 1').get()) {
-    db.exec(`
-      INSERT INTO schema_migrations (version) VALUES (1);
-    `);
-    const seed = db.transaction(() => {
-      const insertSubject = db.prepare('INSERT OR IGNORE INTO subjects (name) VALUES (?)');
-      ['Mathematics', 'English', 'Science', 'Social Studies'].forEach((subject) => insertSubject.run(subject));
-    });
-    seed();
-  }
+  await db.query(
+    `INSERT INTO schema_migrations (version) VALUES (1) ON CONFLICT (version) DO NOTHING`
+  );
+  await db.query(`
+    INSERT INTO subjects (name) VALUES
+      ('Mathematics'), ('English'), ('Science'), ('Social Studies')
+    ON CONFLICT (name) DO NOTHING
+  `);
 }
 
-function ownerExists() {
-  return Boolean(db.prepare('SELECT id FROM owner WHERE id = 1').get());
+async function ownerExists() {
+  const result = await db.query('SELECT id FROM owner WHERE id = 1');
+  return result.rowCount > 0;
 }
 
-module.exports = { db, initializeDatabase, ownerExists };
+module.exports = { db, pool, initializeDatabase, ownerExists };
