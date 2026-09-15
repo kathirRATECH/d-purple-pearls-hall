@@ -1,0 +1,14 @@
+<%- include('partials/header') %>
+<section class="auth-card"><p class="eyebrow">Student account</p><h1>Sign up as a student</h1>
+  <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+  <form method="post" action="/student/signup" class="stack">
+    <label>Full name<input name="fullName" value="<%= values.fullName || '' %>" required maxlength="80"></label>
+    <label>Email<input type="email" name="email" value="<%= values.email || '' %>" required maxlength="160"></label>
+    <label>Admission number<input name="admissionNumber" value="<%= values.admissionNumber || '' %>" required maxlength="40"></label>
+    <label>Class / form<input name="className" value="<%= values.className || '' %>" required maxlength="60" placeholder="e.g. Year 10A"></label>
+    <label>Password <span class="muted">(8+ characters)</span><input type="password" name="password" required minlength="8" maxlength="128"></label>
+    <button class="button primary" type="submit">Create student account</button>
+  </form>
+  <p class="muted">Already registered? <a href="/student/login">Student login</a></p>
+</section>
+<%- include('partials/footer') %>

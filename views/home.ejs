@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+<section class="hero">
+  <p class="eyebrow">D Purple Pearls Hall · Lagos, Nigeria</p>
+  <h1>One clear place for learning progress.</h1>
+  <p class="hero-copy">Students see their results, teachers manage their own classes, and the owner gets a complete school overview.</p>
+  <div class="role-cards">
+    <article class="role-card"><h2>Students</h2><p>Check scores, averages, and your current ranking.</p><a class="button primary" href="/student/login">Student login</a><a class="text-link" href="/student/signup">Create student account</a></article>
+    <article class="role-card"><h2>Teachers</h2><p>Record results securely for students in your class.</p><a class="button primary" href="/teacher/login">Teacher login</a><a class="text-link" href="/teacher/signup">Create teacher account</a></article>
+    <article class="role-card"><h2>Owner</h2><p>Review class rankings and the all-school performance table.</p><a class="button primary" href="<%= ownerReady ? '/owner/login' : '/owner/setup' %>"><%= ownerReady ? 'Owner login' : 'Set up owner' %></a></article>
+  </div>
+</section>
+<%- include('partials/footer') %>

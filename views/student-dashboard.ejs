@@ -1,0 +1,7 @@
+<%- include('partials/header') %>
+<div class="page-heading"><div><p class="eyebrow">Student</p><h1>Hello, <%= account.fullName %></h1><p class="muted"><%= account.className || 'Class not set' %></p></div><div class="metric"><strong><%= average.toFixed(1) %></strong><span>Average</span></div></div>
+<div class="grid two">
+  <section class="panel"><h2>My results</h2><% if (!scores.length) { %><p class="muted">No scores have been entered yet.</p><% } else { %><table><thead><tr><th>Subject</th><th>Score</th></tr></thead><tbody><% scores.forEach((row) => { %><tr><td><%= row.subject %></td><td><strong><%= row.score %>%</strong></td></tr><% }) %></tbody></table><% } %></section>
+  <section class="panel"><h2>Class ranking</h2><% if (position) { %><p class="callout">You are currently <strong>#<%= position %></strong> in the visible ranking.</p><% } %><ol class="ranking"><% ranking.forEach((row, index) => { %><li><span><b>#<%= index + 1 %></b> <%= row.name %><small><%= row.className || 'Class not set' %></small></span><strong><%= Number(row.average).toFixed(1) %>%</strong></li><% }) %></ol></section>
+</div>
+<%- include('partials/footer') %>

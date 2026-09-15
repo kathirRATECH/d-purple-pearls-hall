@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+<section class="auth-card"><p class="eyebrow">Teacher account</p><h1>Sign up as a teacher</h1>
+  <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+  <form method="post" action="/teacher/signup" class="stack">
+    <label>Full name<input name="fullName" value="<%= values.fullName || '' %>" required maxlength="80"></label>
+    <label>Email<input type="email" name="email" value="<%= values.email || '' %>" required maxlength="160"></label>
+    <label>Class you teach<input name="className" value="<%= values.className || '' %>" required maxlength="60" placeholder="e.g. Year 10A"></label>
+    <label>Password <span class="muted">(8+ characters)</span><input type="password" name="password" required minlength="8" maxlength="128"></label>
+    <button class="button primary" type="submit">Create teacher account</button>
+  </form>
+  <p class="muted">Already registered? <a href="/teacher/login">Teacher login</a></p>
+</section>
+<%- include('partials/footer') %>

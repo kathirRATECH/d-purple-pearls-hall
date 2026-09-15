@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<section class="auth-card"><p class="eyebrow">First-run setup</p><h1>Create the owner account</h1><p class="muted">There is one owner account for the school portal.</p>
+  <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+  <form method="post" action="/owner/setup" class="stack">
+    <label>Username<input name="username" value="<%= values.username || '' %>" required maxlength="40" autocomplete="username"></label>
+    <label>Password <span class="muted">(8+ characters)</span><input type="password" name="password" required minlength="8" maxlength="128" autocomplete="new-password"></label>
+    <button class="button primary" type="submit">Complete setup</button>
+  </form>
+</section>
+<%- include('partials/footer') %>

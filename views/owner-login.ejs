@@ -1,0 +1,11 @@
+<%- include('partials/header') %>
+<section class="auth-card"><p class="eyebrow">Owner portal</p><h1>Owner login</h1>
+  <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+  <% if (query && query.setup) { %><div class="alert success">Owner account ready. Log in to continue.</div><% } %>
+  <form method="post" action="/owner/login" class="stack">
+    <label>Username<input name="username" value="<%= values.username || '' %>" required autocomplete="username"></label>
+    <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+    <button class="button primary" type="submit">Log in</button>
+  </form>
+</section>
+<%- include('partials/footer') %>
