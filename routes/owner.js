@@ -13,7 +13,10 @@ router.post('/owner/setup', asyncHandler(async (req, res) => {
   if (!/^[a-zA-Z0-9_.-]+(?: [a-zA-Z0-9_.-]+)*$/.test(values.username) || values.username.length < 3 || values.username.length > 40) return res.status(400).render('owner-setup', { title: 'Owner setup', error: 'Username must be 3–40 characters using letters, numbers, spaces, dots, dashes, or underscores.', values });
   if (password.length < 8 || password.length > 128) return res.status(400).render('owner-setup', { title: 'Owner setup', error: 'Password must be 8–128 characters.', values });
   try { await db.query('INSERT INTO owner (id, username, password_hash) VALUES (1, $1, $2)', [values.username, bcrypt.hashSync(password, 12)]); res.redirect('/owner/login?setup=1'); }
-  catch (error) { res.status(400).render('owner-setup', { title: 'Owner setup', error: 'Owner setup could not be completed. Please try again.', values }); }
+  catch (error) {
+    console.error('Owner setup failed:', { code: error.code, constraint: error.constraint, detail: error.detail });
+    res.status(400).render('owner-setup', { title: 'Owner setup', error: 'Owner setup could not be completed. Please try again.', values });
+  }
 }));
 router.get('/owner/login', asyncHandler(async (req, res) => { if (!await ownerExists()) return res.redirect('/owner/setup'); if (req.account) return res.redirect('/' + req.account.type + '/dashboard'); res.render('owner-login', { title: 'Owner login', error: null, query: req.query, values: {} }); }));
 router.post('/owner/login', asyncHandler(async (req, res) => {
